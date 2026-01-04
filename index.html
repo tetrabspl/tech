@@ -29,7 +29,7 @@
   <div id="apps" class="row"></div>
 </div>
 
-<!-- 🔥 FIREBASE SDKs (VERY IMPORTANT) -->
+<!-- 🔥 FIREBASE SDKs -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -37,64 +37,9 @@
 <!-- 🔥 Firebase Config -->
 <script src="js/firebase.js"></script>
 
-<!-- 🔥 LOAD APPS FROM FIRESTORE -->
+<!-- 🔥 LOAD APPS FROM FIRESTORE (ONLY ONCE) -->
 <script>
-  firebase.auth().onAuthStateChanged(function(user) {
-    loadApps();
-  });
-
-  function loadApps() {
-    const db = firebase.firestore();
-
-    db.collection("apps")
-      .where("active", "==", true)
-      .get()
-      .then(function(querySnapshot) {
-
-        let html = "";
-
-        if (querySnapshot.empty) {
-          document.getElementById("apps").innerHTML =
-            "<p>No apps available</p>";
-          return;
-        }
-
-        querySnapshot.forEach(function(doc) {
-          const app = doc.data();
-
-          html += `
-            <div class="col-md-4">
-              <div class="card mb-4 shadow">
-                <div class="card-body">
-                  <h5 class="card-title">${app.name}</h5>
-                  <p class="card-text">${app.desc}</p>
-                  <button class="btn btn-primary"
-                    onclick="startCheckout('${doc.id}')">
-                    Buy ₹${app.price}
-                  </button>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-
-        document.getElementById("apps").innerHTML = html;
-      })
-      .catch(function(error) {
-        console.error("Error loading apps:", error);
-      });
-  }
-
-  function startCheckout(appId) {
-    if (!firebase.auth().currentUser) {
-      window.location.href = "login.html";
-    } else {
-      window.location.href = "checkout.html?id=" + appId;
-    }
-  }
-</script>
-  <script>
-  // 🔥 Direct apps load (login required nahi)
+  // Page load hote hi apps load karo
   document.addEventListener("DOMContentLoaded", function () {
     loadApps();
   });
@@ -149,7 +94,6 @@
     }
   }
 </script>
-
 
 </body>
 </html>
