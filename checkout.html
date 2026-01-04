@@ -25,6 +25,14 @@
 <script src="js/firebase.js"></script>
 
 <script>
+  function startCheckout(appId) {
+    if (!firebase.auth().currentUser) {
+      window.location.href = "login.html";
+    } else {
+      window.location.href = "checkout.html?id=" + appId;
+    }
+  }
+  
   const params = new URLSearchParams(window.location.search);
   const appId = params.get("id");
   let selectedApp;
