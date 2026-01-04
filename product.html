@@ -152,6 +152,57 @@ function buyNow() {
   }
 }
 </script>
+<!-- ================= FIREBASE SDKs ================= -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="js/firebase.js"></script>
+
+<script>
+  // URL se app id lo
+  const params = new URLSearchParams(window.location.search);
+  const appId = params.get("id");
+
+  const carousel = document.getElementById("carouselImages");
+
+  if (!appId) {
+    alert("Invalid product");
+  } else {
+    firebase.firestore()
+      .collection("apps")
+      .doc(appId)
+      .get()
+      .then(doc => {
+        if (!doc.exists) return;
+
+        const app = doc.data();
+
+        // Title & description
+        document.getElementById("appName").innerText = app.name;
+        document.getElementById("appDesc").innerText = app.desc;
+        document.getElementById("appPrice").innerText = app.price;
+
+        // Screenshots
+        if (app.screenshots && app.screenshots.length > 0) {
+          let html = "";
+
+          app.screenshots.forEach((url, index) => {
+            html += `
+              <div class="carousel-item ${index === 0 ? "active" : ""}">
+                <img src="${url}" class="d-block w-100 rounded"
+                     style="max-height:450px; object-fit:contain;">
+              </div>
+            `;
+          });
+
+          carousel.innerHTML = html;
+        }
+      });
+  }
+
+  function buyNow() {
+    window.location.href = "checkout.html?id=" + appId;
+  }
+</script>
 
 </body>
 </html>
