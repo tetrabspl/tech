@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Checkout</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+  <div class="card shadow">
+    <div class="card-body">
+      <h3 id="appName">App Name</h3>
+      <p id="appDesc"></p>
+      <h4 id="appPrice"></h4>
+
+      <button class="btn btn-success mt-3" onclick="payNow()">
+        Pay with Razorpay
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/firebase.js"></script>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const appId = params.get("id");
+  let selectedApp;
+  let orderId;
+
+  setTimeout(() => {
+    const db = firebase.firestore();
+
+    db.collection("apps").doc(appId).get().then(doc => {
+      if (!doc.exists) return;
+      selectedApp = doc.data();
+
+      document.getElementById("appName").innerText = selectedApp.name;
+      document.getElementById("appDesc").innerText = selectedApp.desc;
+      document.getElementById("appPrice").innerText = "₹" + selectedApp.price;
+    });
+  }, 1500);
+
+  function payNow() {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const db = firebase.firestore();
+
+    // 1️⃣ Create order in Firestore (PENDING)
+    db.collection("orders").add({
+      userId: user.uid,
+      email: user.email,
+      appName: selectedApp.name,
+      price: selectedApp.price,
+      status: "PENDING",
+      createdAt: new Date()
+    }).then(docRef => {
+      orderId = docRef.id;
+      openRazorpay();
+    });
+  }
+
+  function openRazorpay() {
+    var options = {
+      key: "rzp_test_Rqcvqire4Uc5pP",
+      amount: selectedApp.price * 100, // paise
+      currency: "INR",
+      name: "My App Store",
+      description: selectedApp.name,
+      handler: function (response) {
+        paymentSuccess(response);
+      },
+      theme: {
+        color: "#3399cc"
+      }
+    };
+
+    var rzp = new Razorpay(options);
+    rzp.open();
+  }
+
+  function paymentSuccess(response) {
+    const db = firebase.firestore();
+
+    // 2️⃣ Update order as PAID
+    db.collection("orders").doc(orderId).update({
+      status: "PAID",
+      razorpay_payment_id: response.razorpay_payment_id
+    }).then(() => {
+      alert("Payment Successful! Order Completed.");
+      window.location.href = "index.html";
+    });
+  }
+</script>
+
+</body>
+</html>
