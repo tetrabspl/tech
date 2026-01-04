@@ -36,42 +36,37 @@
   <script>
     var db;
 
-    // Firebase ko thoda time dene ke liye
-    setTimeout(function () {
-      db = firebase.firestore();
+setTimeout(function () {
+  db = firebase.firestore();
 
-      db.collection("apps")
-        .where("active", "==", true)
-        .get()
-        .then(function (querySnapshot) {
-          var html = "";
+  db.collection("apps")
+    .where("active", "==", true)
+    .get()
+    .then(function (querySnapshot) {
+      var html = "";
 
-          querySnapshot.forEach(function (doc) {
-            var app = doc.data();
+      querySnapshot.forEach(function (doc) {
+        var app = doc.data();
 
-            html += `
-              <div class="col-md-4">
-                <div class="card mb-4 shadow">
-                  <div class="card-body">
-                    <h5 class="card-title">${app.name}</h5>
-                    <p class="card-text">${app.desc}</p>
-                    <button class="btn btn-primary"
-                      onclick="buyApp('${app.buyLink}')">
-                      Buy ₹${app.price}
-                    </button>
-                  </div>
-                </div>
+        html += `
+          <div class="col-md-4">
+            <div class="card mb-4 shadow">
+              <div class="card-body">
+                <h5 class="card-title">${app.name}</h5>
+                <p class="card-text">${app.desc}</p>
+                <button class="btn btn-primary"
+                  onclick="startCheckout('${doc.id}')">
+                  Buy ₹${app.price}
+                </button>
               </div>
-            `;
-          });
+            </div>
+          </div>
+        `;
+      });
 
-          document.getElementById("apps").innerHTML = html;
-        })
-        .catch(function (error) {
-          console.error("Error loading apps:", error);
-        });
-
-    }, 1500);
+      document.getElementById("apps").innerHTML = html;
+    });
+}, 1500);
 
     // 🔐 Buy button logic
     function buyApp(link) {
