@@ -2,140 +2,97 @@
 <html>
 <head>
   <title>Admin Panel | My App Store</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-light">
 
 <div class="container mt-5">
+
   <h2 class="mb-4">👑 Admin Panel</h2>
 
+  <!-- ADD APP -->
   <div class="card mb-4">
     <div class="card-body">
       <h5>Add New App</h5>
 
       <input id="name" class="form-control mb-2" placeholder="App Name">
       <input id="desc" class="form-control mb-2" placeholder="Description">
-      <input id="price" class="form-control mb-2" placeholder="Price">
-      
-      <button class="btn btn-success" onclick="addApp()">Add App</button>
+      <input id="price" type="number" class="form-control mb-2" placeholder="Price">
+
+      <button onclick="addApp()" class="btn btn-success">
+        Add App
+      </button>
     </div>
   </div>
 
-  <h5>Existing Apps</h5>
-  <div id="apps"></div>
+  <!-- LOGOUT -->
+  <button onclick="logout()" class="btn btn-danger">
+    Logout
+  </button>
+
 </div>
 
-<!-- 🔥 Firebase SDKs -->
+<!-- 🔥 FIREBASE SDKs -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<!-- 🔥 Firebase Config -->
 <script src="js/firebase.js"></script>
 
 <script>
-  let db;
+  let db = firebase.firestore();
+  let currentUser;
 
-  firebase.auth().onAuthStateChanged(user => {
+  // 🔐 AUTH + ROLE CHECK
+  firebase.auth().onAuthStateChanged(function(user) {
     if (!user) {
       window.location.href = "login.html";
       return;
     }
 
-    db = firebase.firestore();
+    currentUser = user;
 
-    // 🔐 Admin check
-    db.collection("admins").doc(user.email).get()
+    db.collection("users").doc(user.uid).get()
       .then(doc => {
-        if (!doc.exists) {
+        if (!doc.exists || doc.data().role !== "admin") {
           alert("Access Denied ❌");
           window.location.href = "index.html";
-        } else {
-          loadApps();
         }
       });
   });
 
+  // ➕ ADD APP
   function addApp() {
     const name = document.getElementById("name").value;
     const desc = document.getElementById("desc").value;
     const price = Number(document.getElementById("price").value);
 
-    db.collection("apps").add({
-      name,
-      desc,
-      price,
-      active: true
-    }).then(() => {
-      alert("App Added ✅");
-      loadApps();
-    });
-  }
-
-  function loadApps() {
-    db.collection("apps").get().then(snapshot => {
-      let html = "";
-      snapshot.forEach(doc => {
-        const app = doc.data();
-        html += `
-          <div class="card mb-2 p-2">
-            <b>${app.name}</b> – ₹${app.price}
-            <button class="btn btn-sm btn-danger float-end"
-              onclick="disableApp('${doc.id}')">
-              Disable
-            </button>
-          </div>
-        `;
-      });
-      document.getElementById("apps").innerHTML = html;
-    });
-  }
-
-  function disableApp(id) {
-    db.collection("apps").doc(id).update({ active: false })
-      .then(loadApps);
-  }
-</script>
-<script>
-  function logout() {
-    firebase.auth().signOut().then(function () {
-      alert("Logged out successfully");
-      window.location.href = "login.html";
-    }).catch(function (error) {
-      alert(error.message);
-    });
-  }
-</script>
-<script>
-  firebase.auth().onAuthStateChanged(function(user) {
-    if (!user) {
-      alert("Please login first");
-      window.location.href = "login.html";
+    if (!name || !desc || !price) {
+      alert("All fields required");
       return;
     }
 
-    const db = firebase.firestore();
+    db.collection("apps").add({
+      name: name,
+      desc: desc,
+      price: price,
+      active: true,
+      createdAt: new Date()
+    }).then(() => {
+      alert("App Added Successfully ✅");
+      location.reload();
+    });
+  }
 
-    db.collection("users").doc(user.uid).get()
-      .then(doc => {
-        if (!doc.exists) {
-          alert("No role assigned");
-          window.location.href = "index.html";
-          return;
-        }
-
-        const role = doc.data().role;
-
-        if (role !== "admin") {
-          alert("Access Denied ❌");
-          window.location.href = "index.html";
-        }
-        // else ADMIN ALLOWED ✅
-      })
-      .catch(err => {
-        alert("Error checking role");
-        console.error(err);
-      });
-  });
+  // 🚪 LOGOUT
+  function logout() {
+    firebase.auth().signOut().then(() => {
+      window.location.href = "login.html";
+    });
+  }
 </script>
 
 </body>
