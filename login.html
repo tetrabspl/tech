@@ -21,23 +21,28 @@
   </div>
 </div>
 
-<script type="module">
+ <script type="module">
   import { auth } from "./js/firebase.js";
   import { signInWithEmailAndPassword } 
-  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
   window.login = function () {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
+    const msg = document.getElementById("msg");
+
+    msg.innerText = "Logging in...";
 
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
         window.location.href = "index.html";
       })
       .catch(error => {
-        document.getElementById("msg").innerText = error.message;
+        msg.innerText = error.message;
       });
   };
+</script>
+
 </script>
 
 
