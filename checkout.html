@@ -11,7 +11,7 @@
 <div class="container mt-5">
   <div class="card shadow">
     <div class="card-body">
-      <h3 id="appName">App Name</h3>
+      <h3 id="appName">Loading...</h3>
       <p id="appDesc"></p>
       <h4 id="appPrice"></h4>
 
@@ -22,54 +22,44 @@
   </div>
 </div>
 
+<!-- Firebase base -->
 <script src="js/firebase.js"></script>
 
 <script>
-  function startCheckout(appId) {
-    if (!firebase.auth().currentUser) {
-      window.location.href = "login.html";
-    } else {
-      window.location.href = "checkout.html?id=" + appId;
-    }
-  }
-  
+  // 🔹 Read app id from URL
   const params = new URLSearchParams(window.location.search);
   const appId = params.get("id");
-  let selectedApp;
-  let orderId;
 
+  let selectedApp = null;
+  let orderId = null;
+
+  // 🔹 Load app details from Firestore
   setTimeout(() => {
-    const db = firebase.firestore();
-
-    db.collection("apps").doc(appId).get().then(doc => {
-      if (!doc.exists) return;
-      selectedApp = doc.data();
-
-      document.getElementById("appName").innerText = selectedApp.name;
-      document.getElementById("appDesc").innerText = selectedApp.desc;
-      document.getElementById("appPrice").innerText = "₹" + selectedApp.price;
-    });
-  }, 1500);
-function placeOrder() {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-      window.location.href = "login.html";
+    if (!appId) {
+      alert("Invalid app!");
+      window.location.href = "index.html";
       return;
     }
 
     const db = firebase.firestore();
 
-    db.collection("orders").add({
-      userId: user.uid,
-      email: user.email,
-      appName: selectedApp.name,
-      price: selectedApp.price,
-      status: "PENDING",
-      createdAt: new Date()
-    }).then(() => {
-      alert("Order placed successfully (Payment pending)");
-    });
-  }
+    db.collection("apps").doc(appId).get()
+      .then(doc => {
+        if (!doc.exists) {
+          alert("App not found!");
+          window.location.href = "index.html";
+          return;
+        }
+
+        selectedApp = doc.data();
+
+        document.getElementById("appName").innerText = selectedApp.name;
+        document.getElementById("appDesc").innerText = selectedApp.desc;
+        document.getElementById("appPrice").innerText = "₹" + selectedApp.price;
+      });
+  }, 1500);
+
+  // 🔹 Pay button logic
   function payNow() {
     const user = firebase.auth().currentUser;
     if (!user) {
@@ -77,9 +67,14 @@ function placeOrder() {
       return;
     }
 
+    if (!selectedApp) {
+      alert("App not loaded yet. Please wait.");
+      return;
+    }
+
     const db = firebase.firestore();
 
-    // 1️⃣ Create order in Firestore (PENDING)
+    // 1️⃣ Create order (PENDING)
     db.collection("orders").add({
       userId: user.uid,
       email: user.email,
@@ -93,10 +88,11 @@ function placeOrder() {
     });
   }
 
+  // 🔹 Open Razorpay popup
   function openRazorpay() {
     var options = {
-      key: "rzp_test_Rqcvqire4Uc5pP",
-      amount: selectedApp.price * 100, // paise
+      key: "rzp_test_Rqcvqire4Uc5pP",   // TEST KEY
+      amount: selectedApp.price * 100,
       currency: "INR",
       name: "My App Store",
       description: selectedApp.name,
@@ -112,10 +108,10 @@ function placeOrder() {
     rzp.open();
   }
 
+  // 🔹 Payment success handler
   function paymentSuccess(response) {
     const db = firebase.firestore();
 
-    // 2️⃣ Update order as PAID
     db.collection("orders").doc(orderId).update({
       status: "PAID",
       razorpay_payment_id: response.razorpay_payment_id
