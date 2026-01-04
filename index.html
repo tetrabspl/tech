@@ -1,46 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My App Store</title>
-  <link rel="stylesheet" href="css/style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>My App Store</title>
 
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Your custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<nav class="navbar navbar-dark bg-dark">
-  <div class="container">
-    <span class="navbar-brand">My App Store</span>
-    <a href="login.html" class="btn btn-outline-light">Login</a>
-  </div>
-</nav>
-
-<div class="container mt-5">
-  <h2 class="mb-4">Available Apps</h2>
-
-  <div class="row">
-    <div class="col-md-4">
-      <div class="card mb-4 shadow">
-        <div class="card-body">
-          <h5 class="card-title">Tetra Library</h5>
-          <p class="card-text">Smart Library Management App</p>
-          <button class="btn btn-primary">Buy ₹999</button>
-        </div>
-      </div>
+  <!-- 🔹 NAVBAR -->
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+      <span class="navbar-brand">My App Store</span>
+      <a href="login.html" class="btn btn-outline-light">Login</a>
     </div>
+  </nav>
 
-    <div class="col-md-4">
-      <div class="card mb-4 shadow">
-        <div class="card-body">
-          <h5 class="card-title">Kanha Panchang</h5>
-          <p class="card-text">Hindu Calendar App</p>
-          <button class="btn btn-primary">Buy ₹499</button>
-        </div>
-      </div>
-    </div>
+  <!-- 🔹 MAIN CONTENT -->
+  <div class="container mt-5">
+    <h2 class="mb-4">Available Apps</h2>
+
+    <!-- 🔥 Firebase se apps yahan dynamically load hongi -->
+    <div id="apps" class="row"></div>
   </div>
-</div>
+
+  <!-- 🔹 Firebase base file (already created by you) -->
+  <script src="js/firebase.js"></script>
+
+  <!-- 🔹 Dynamic Apps Loader -->
+  <script>
+    var db;
+
+    // Firebase ko thoda time dene ke liye
+    setTimeout(function () {
+      db = firebase.firestore();
+
+      db.collection("apps")
+        .where("active", "==", true)
+        .get()
+        .then(function (querySnapshot) {
+          var html = "";
+
+          querySnapshot.forEach(function (doc) {
+            var app = doc.data();
+
+            html += `
+              <div class="col-md-4">
+                <div class="card mb-4 shadow">
+                  <div class="card-body">
+                    <h5 class="card-title">${app.name}</h5>
+                    <p class="card-text">${app.desc}</p>
+                    <button class="btn btn-primary"
+                      onclick="buyApp('${app.buyLink}')">
+                      Buy ₹${app.price}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          document.getElementById("apps").innerHTML = html;
+        })
+        .catch(function (error) {
+          console.error("Error loading apps:", error);
+        });
+
+    }, 1500);
+
+    // 🔐 Buy button logic
+    function buyApp(link) {
+      if (!firebase.auth().currentUser) {
+        window.location.href = "login.html";
+      } else {
+        window.open(link, "_blank");
+      }
+    }
+  </script>
 
 </body>
-
 </html>
