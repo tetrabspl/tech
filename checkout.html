@@ -42,7 +42,26 @@
       document.getElementById("appPrice").innerText = "₹" + selectedApp.price;
     });
   }, 1500);
+function placeOrder() {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
 
+    const db = firebase.firestore();
+
+    db.collection("orders").add({
+      userId: user.uid,
+      email: user.email,
+      appName: selectedApp.name,
+      price: selectedApp.price,
+      status: "PENDING",
+      createdAt: new Date()
+    }).then(() => {
+      alert("Order placed successfully (Payment pending)");
+    });
+  }
   function payNow() {
     const user = firebase.auth().currentUser;
     if (!user) {
