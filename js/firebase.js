@@ -19,3 +19,8 @@ script2.onload = function () {
 
   firebase.initializeApp(firebaseConfig);
 };
+// Load Firestore
+var script3 = document.createElement("script");
+script3.src = "https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js";
+document.head.appendChild(script3);
+
