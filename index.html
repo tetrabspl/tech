@@ -57,7 +57,7 @@
 <div class="container mt-5">
   <h2 class="mb-4 fw-bold">Available Apps</h2>
 
-  <!-- 🔥 Apps here -->
+  <!-- 🔥 Apps load here -->
   <div id="apps" class="row g-4"></div>
 </div>
 
@@ -162,6 +162,7 @@ function loadApps() {
     });
 }
 
+// 🔑 THIS IS THE CLICK LOGIC YOU WERE ASKING ABOUT
 function viewProduct(appId) {
   window.location.href = "product.html?id=" + appId;
 }
