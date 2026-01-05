@@ -107,7 +107,7 @@ db.collection("apps").doc(appId).get().then(doc => {
 
   // Basic info
   document.getElementById("appName").innerText = selectedApp.name;
-  document.getElementById("appDesc").innerText = selectedApp.desc;
+  document.getElementById("appDesc").innerText = selectedApp.shortdesc;
   document.getElementById("appPrice").innerText = selectedApp.price;
 
   // Features
