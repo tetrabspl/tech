@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>Admin Panel | My App Store</title>
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -18,8 +17,15 @@
       <h5>Add New App</h5>
 
       <input id="name" class="form-control mb-2" placeholder="App Name">
-      <input id="desc" class="form-control mb-2" placeholder="Description">
+
+      <textarea id="shortDesc" class="form-control mb-2" placeholder="Short Description (1–2 lines)"></textarea>
+
+      <textarea id="fullDesc" class="form-control mb-2" placeholder="Full Description (Detailed)"></textarea>
+
       <input id="price" type="number" class="form-control mb-2" placeholder="Price">
+
+      <label class="mt-2">Upload App Screenshots</label>
+      <input id="screenshots" type="file" class="form-control mb-3" multiple accept="image/*">
 
       <button onclick="addApp()" class="btn btn-success">
         Add App
@@ -34,16 +40,18 @@
 
 </div>
 
-<!-- 🔥 FIREBASE SDKs -->
+<!-- 🔥 FIREBASE SDKs (v8 – same as your project) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <!-- 🔥 Firebase Config -->
 <script src="js/firebase.js"></script>
 
 <script>
   let db = firebase.firestore();
+  let storage = firebase.storage();
   let currentUser;
 
   // 🔐 AUTH + ROLE CHECK
@@ -64,27 +72,45 @@
       });
   });
 
-  // ➕ ADD APP
-  function addApp() {
+  // ➕ ADD APP WITH IMAGES
+  async function addApp() {
     const name = document.getElementById("name").value;
-    const desc = document.getElementById("desc").value;
+    const shortDesc = document.getElementById("shortDesc").value;
+    const fullDesc = document.getElementById("fullDesc").value;
     const price = Number(document.getElementById("price").value);
+    const files = document.getElementById("screenshots").files;
 
-    if (!name || !desc || !price) {
-      alert("All fields required");
+    if (!name || !shortDesc || !fullDesc || !price || files.length === 0) {
+      alert("All fields including screenshots are required");
       return;
     }
 
-    db.collection("apps").add({
-      name: name,
-      desc: desc,
-      price: price,
-      active: true,
-      createdAt: new Date()
-    }).then(() => {
+    let imageUrls = [];
+
+    try {
+      for (let file of files) {
+        const ref = storage.ref("apps/" + Date.now() + "_" + file.name);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        imageUrls.push(url);
+      }
+
+      await db.collection("apps").add({
+        name: name,
+        shortDesc: shortDesc,
+        fullDesc: fullDesc,
+        price: price,
+        screenshots: imageUrls,
+        active: true,
+        createdAt: new Date()
+      });
+
       alert("App Added Successfully ✅");
       location.reload();
-    });
+
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
   }
 
   // 🚪 LOGOUT
