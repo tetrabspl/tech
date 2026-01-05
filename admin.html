@@ -18,14 +18,17 @@
 
       <input id="name" class="form-control mb-2" placeholder="App Name">
 
-      <textarea id="shortDesc" class="form-control mb-2" placeholder="Short Description (1–2 lines)"></textarea>
+      <textarea id="shortDesc" class="form-control mb-2"
+        placeholder="Short Description (1–2 lines)"></textarea>
 
-      <textarea id="fullDesc" class="form-control mb-2" placeholder="Full Description (Detailed)"></textarea>
+      <textarea id="fullDesc" class="form-control mb-2"
+        placeholder="Full Description (Detailed)"></textarea>
 
       <input id="price" type="number" class="form-control mb-2" placeholder="Price">
 
       <label class="mt-2">Upload App Screenshots</label>
-      <input id="screenshots" type="file" class="form-control mb-3" multiple accept="image/*">
+      <input id="screenshots" type="file" class="form-control mb-3"
+             multiple accept="image/*">
 
       <button onclick="addApp()" class="btn btn-success">
         Add App
@@ -40,7 +43,7 @@
 
 </div>
 
-<!-- 🔥 FIREBASE SDKs (v8 – same as your project) -->
+<!-- 🔥 FIREBASE SDKs (v8) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -50,9 +53,8 @@
 <script src="js/firebase.js"></script>
 
 <script>
-  let db = firebase.firestore();
-  let storage = firebase.storage();
-  let currentUser;
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
   // 🔐 AUTH + ROLE CHECK
   firebase.auth().onAuthStateChanged(function(user) {
@@ -61,22 +63,20 @@
       return;
     }
 
-    currentUser = user;
-
-    db.collection("users").doc(user.uid).get()
-      .then(doc => {
-        if (!doc.exists || doc.data().role !== "admin") {
-          alert("Access Denied ❌");
-          window.location.href = "index.html";
-        }
-      });
+    db.collection("users").doc(user.uid).get().then(doc => {
+      if (!doc.exists || doc.data().role !== "admin") {
+        alert("Access Denied ❌");
+        window.location.href = "index.html";
+      }
+    });
   });
 
-  // ➕ ADD APP WITH IMAGES
+  // ➕ ADD APP WITH IMAGES (FIXED)
   async function addApp() {
-    const name = document.getElementById("name").value;
-    const shortDesc = document.getElementById("shortDesc").value;
-    const fullDesc = document.getElementById("fullDesc").value;
+
+    const name = document.getElementById("name").value.trim();
+    const shortDesc = document.getElementById("shortDesc").value.trim();
+    const fullDesc = document.getElementById("fullDesc").value.trim();
     const price = Number(document.getElementById("price").value);
     const files = document.getElementById("screenshots").files;
 
@@ -85,14 +85,22 @@
       return;
     }
 
-    let imageUrls = [];
+    const imageUrls = [];
+    const timeStamp = Date.now(); // 🔑 IMPORTANT
 
     try {
-      for (let file of files) {
-        const ref = storage.ref("apps/" + Date.now() + "_" + file.name);
-        await ref.put(file);
-        const url = await ref.getDownloadURL();
-        imageUrls.push(url);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        const imageRef = firebase
+          .storage()
+          .ref("apps/" + timeStamp + "_" + i + "_" + file.name);
+
+        await imageRef.put(file);
+
+        // 🔥 THIS RETURNS CORRECT PUBLIC URL
+        const downloadURL = await imageRef.getDownloadURL();
+        imageUrls.push(downloadURL);
       }
 
       await db.collection("apps").add({
@@ -102,14 +110,15 @@
         price: price,
         screenshots: imageUrls,
         active: true,
-        createdAt: new Date()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      alert("App Added Successfully ✅");
+      alert("✅ App Added Successfully");
       location.reload();
 
-    } catch (err) {
-      alert("Error: " + err.message);
+    } catch (error) {
+      console.error(error);
+      alert("❌ Upload failed: " + error.message);
     }
   }
 
