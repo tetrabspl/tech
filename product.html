@@ -108,7 +108,6 @@ db.collection("apps").doc(appId).get().then(doc => {
   // Basic info
   document.getElementById("appName").innerText = selectedApp.name;
   document.getElementById("appDesc").innerText = selectedApp.shortdesc;
-  document.getElementById("applongDesc").innerText = selectedApp.longdesc;
   document.getElementById("appPrice").innerText = selectedApp.price;
 
   // Features
@@ -180,7 +179,6 @@ function buyNow() {
         // Title & description
         document.getElementById("appName").innerText = app.name;
         document.getElementById("appDesc").innerText = app.shortdesc;
-        document.getElementById("applongDesc").innerText = selectedApp.longdesc;
         document.getElementById("appPrice").innerText = app.price;
 
         // Screenshots
